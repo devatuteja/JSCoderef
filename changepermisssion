@@ -1,0 +1,25 @@
+//how to change the permisssion 
+
+if (entity.Attributes.Contains("new_sentforrmapproval"))
+                    {
+                        var confirmation = (entity.Attributes["new_sentforrmapproval"]);
+                        if (confirmation.Equals(true))
+                        {
+                            //added by dilshad ali
+                            var recordreference = new EntityReference(entity.LogicalName,entity.Id); //ER of the record which needs to be shared/assigned to user/team 
+                            var userreference = new EntityReference("systemuser", new Guid("8841974b-6042-ea11-9114-00155d0a0438"));//ER of the user whom to share the record with
+                            var grantAccessRequest = new GrantAccessRequest
+                            {
+                                PrincipalAccess = new PrincipalAccess
+                                {
+                                    AccessMask = AccessRights.ReadAccess | AccessRights.WriteAccess | AccessRights.AppendAccess | AccessRights.AppendToAccess,
+                                    Principal = userreference
+                                },
+                                Target = recordreference
+                            };
+                            service.Execute(grantAccessRequest);
+
+                            entity.Attributes["new_pendingat"] = userreference;
+                                       //added by dilshad ali        
+                           
+                    }
