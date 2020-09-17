@@ -1,0 +1,121 @@
+using Microsoft.Xrm.Sdk;
+
+using Microsoft.Xrm.Sdk.Query;
+
+using System;
+
+using System.Collections.Generic;
+
+using System.Linq;
+
+using System.Text;
+
+using System.Threading.Tasks;
+
+
+namespace PluginImageExample
+{
+
+ public class LeadUpdate : IPlugin
+
+  {
+
+    public void Execute(IServiceProvider serviceProvider)
+
+    {
+
+    // Extract the tracing service for use in debugging sandboxed plug-ins.
+
+    ITracingService tracingService =
+
+    (ITracingService)serviceProvider.GetService(typeof(ITracingService));
+
+
+    // Obtain the execution context from the service provider.
+
+    IPluginExecutionContext context = 
+
+    (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+
+
+    // Obtain the organization service factory.
+    
+    IOrganizationServiceFactory serviceFactory = 
+
+    (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
+
+    
+    // Obtain the organization service.    
+    IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+
+
+    if (context.InputParameters.Contains("Target") && 
+
+                  context.InputParameters["Target"] is Entity)
+
+     {
+
+        // Obtain the target entity from the input parameters.
+
+         Entity entity = (Entity)context.InputParameters["Target"];
+
+        // User is updating only email address in lead form so we will get only 
+           emailaddress from the context not lead's description.To get description
+           orsubject field we will use plugin images
+     
+        // get the lead email from context.
+
+         string email = entity["emailaddress1"].ToString();
+
+        // get the current record guid from context
+
+         Guid leadRecordGuid = entity.Id;
+
+       
+  // Define variables to store Preimage and Postimage  string pretopic = string.Empty; string posttopic = string.Empty; 
+
+        // in below leadimage has been added in plugin registration tool
+
+        // get PreImage from Context
+
+          if (context.PreEntityImages.Contains("LeadTopicImage") && context.PreEntityImages["LeadTopicImage"] is Entity)
+          {
+
+                Entity preMessageImage = (Entity)context.PreEntityImages["LeadTopicImage"];
+               // get topic field value before database update perform
+                pretopic = (String)preMessageImage.Attributes["subject"]; 
+
+          }  
+
+                
+         // get PostImage from Context
+            if (context.PostEntityImages.Contains("LeadTopicImage") && 
+                   context.PostEntityImages["LeadTopicImage"] is Entity)
+
+            {
+
+              Entity postMessageImage = (Entity)context.PostEntityImages["LeadTopicImage"];
+
+              // get topic field value after database update performed
+             posttopic = (String)postMessageImage.Attributes["subject"]; 
+
+            } 
+
+            
+           // update the old and new values of topic field in description field
+
+          Entity leadObj = 
+          service.Retrieve(context.PrimaryEntityName,leadRecordGuid, new ColumnSet("description"));
+
+          leadObj["description"] = 
+          "Pre-Image of description- "+pretopic+"   "+"Post-Image of description-- "+posttopic;
+
+          service.Update(leadObj);
+
+           }
+
+        }
+
+    }
+
+}
